@@ -2,7 +2,6 @@
 #include <ESP8266WebServer.h>
 #include <EEPROM.h>
 #include "webpages.h"
-#include "sensorspage.h"
 
 ESP8266WebServer server(80);
 
