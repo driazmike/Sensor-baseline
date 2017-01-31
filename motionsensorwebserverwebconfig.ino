@@ -191,9 +191,18 @@ void createWebServer(int webtype)
       server.send(200, "text/html", file1);
     });
     server.on("/lightstatus", [](){
-      String file2 = file2a + sensorState + file2b + changes + file2C;
+      String file2 = file2a + sensorState + file2b + changes + file2c + setTime;
       server.send(200, "text/html", file2);
       });
+    server.on("/timeoutsetting", [](){
+      server.send(200, "text/html", file3);
+    });
+    server.on("/setting", [](){
+      String settTime = server.arg("Time");
+      setTime = settTime.toInt();
+      statusCode = 200;
+      server.send(statusCode, "text/html", file4);
+    });
     }
   }
 
