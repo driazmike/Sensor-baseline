@@ -3,7 +3,7 @@ void loop() {
 server.handleClient();
   
 //automatic on/off with timer based on sensor input
-/*  irState = digitalRead(gpio4_pin);
+  irState = digitalRead(gpio4_pin);
   if (irState == HIGH) {
     digitalWrite(gpio0_pin, HIGH);
     sensorState = "Lights are on!!!!";
@@ -26,5 +26,5 @@ server.handleClient();
       }
       }
     }
-delay(500);*/
+delay(500);
 }
