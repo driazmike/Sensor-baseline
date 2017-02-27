@@ -1,7 +1,10 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <EEPROM.h>
+#include <SD.h>
+#include <SPI.h>
 #include "webpages.h"
+#include "webserver.h"
 
 ESP8266WebServer server(80);
 
@@ -17,16 +20,21 @@ int gpio0_pin = 0;
 int gpio2_pin = 2;
 int gpio4_pin = 4;
 int counter=0;
-int irState;
 int stateChanges=0;
+int irState;
 int setTime=10;
+Sd2Card card;
+SdVolume volume;
+SdFile root;
+File myFile;
 
 void setup() {
   // preparing GPIOs
   pinMode(gpio0_pin, OUTPUT);
   digitalWrite(gpio0_pin, LOW);
-  pinMode(gpio2_pin, OUTPUT);
+  pinMode(gpio2_pin, INPUT);
   digitalWrite(gpio2_pin, LOW);
+  //attachInterrupt(0, manualinterrupt, CHANGE);
   pinMode(gpio4_pin, INPUT);
   
   Serial.begin(115200);
@@ -34,6 +42,21 @@ void setup() {
   delay(10);
   Serial.println();
   Serial.println();
+
+// initialize SD card
+        Serial.println("Initializing SD card...");
+        if (!SD.begin(15)) {
+            Serial.println("ERROR - SD card initialization failed!");
+            return;    // init failed
+        }
+        Serial.println("SUCCESS - SD card initialized.");
+        // check for test.txt file
+        if (!SD.exists("test.txt")) {
+            Serial.println("ERROR - Can't find test.txt file!");
+            return;  // can't find index file
+        }
+        Serial.println("SUCCESS - Found test.txt file."); 
+
   Serial.println("Startup");
   // read eeprom for ssid and pass
   Serial.println("Reading EEPROM ssid");
@@ -59,6 +82,7 @@ void setup() {
         return;
       } 
   }
+
   setupAP();
 }
 
@@ -129,110 +153,11 @@ void setupAP(void) {
       st += "</li>";
     }
   st += "</ol>";
-  delay(100);
+  delay(200);
   WiFi.softAP(ssid, passphrase, 6);
   Serial.println("softap");
   launchWeb(1);
   Serial.println("over");
 }
 
-//Web Server if WiFi is configured
-void createWebServer(int webtype)
-{
-  if ( webtype == 1 ) {
-    server.on("/", []() {
-        IPAddress ip = WiFi.softAPIP();
-        String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
-        content = "<!DOCTYPE HTML>\r\n<html>Hello from ESP8266 at ";
-        content += ipStr;
-        content += "<p>";
-        content += st;
-        content += "</p><form method='get' action='setting'><label>SSID: </label><input name='ssid' length=32><input name='pass' length=64><input type='submit'></form>";
-        content += "</html>";
-        server.send(200, "text/html", content);  
-    });
-    server.on("/setting", []() {
-        String qsid = server.arg("ssid");
-        String qpass = server.arg("pass");
-        if (qsid.length() > 0 && qpass.length() > 0) {
-          Serial.println("clearing eeprom");
-          for (int i = 0; i < 96; ++i) { EEPROM.write(i, 0); }
-          Serial.println(qsid);
-          Serial.println("");
-          Serial.println(qpass);
-          Serial.println("");
-            
-          Serial.println("writing eeprom ssid:");
-          for (int i = 0; i < qsid.length(); ++i)
-            {
-              EEPROM.write(i, qsid[i]);
-              Serial.print("Wrote: ");
-              Serial.println(qsid[i]); 
-            }
-          Serial.println("writing eeprom pass:"); 
-          for (int i = 0; i < qpass.length(); ++i)
-            {
-              EEPROM.write(32+i, qpass[i]);
-              Serial.print("Wrote: ");
-              Serial.println(qpass[i]); 
-            }    
-          EEPROM.commit();
-          content = "{\"Success\":\"saved to eeprom... reset to boot into new wifi\"}";
-          statusCode = 200;
-        } else {
-          content = "{\"Error\":\"404 not found\"}";
-          statusCode = 404;
-          Serial.println("Sending 404");
-        }
-        server.send(statusCode, "application/json", content);
-    });
-  } else if (webtype == 0) {
-    server.on("/", []() {
-      server.send(200, "text/html", file1);
-    });
-    server.on("/lightstatus", [](){
-      String file2 = file2a + sensorState + file2b + changes + file2c + setTime;
-      server.send(200, "text/html", file2);
-      });
-    server.on("/timeoutsetting", [](){
-      server.send(200, "text/html", file3);
-    });
-    server.on("/setting", [](){
-      String settTime = server.arg("Time");
-      setTime = settTime.toInt();
-      statusCode = 200;
-      server.send(statusCode, "text/html", file4);
-    });
-    }
-  }
 
-void loop() {
-  //automatic on/off with timer based on sensor input
-  irState = digitalRead(gpio4_pin);
-  if (irState == HIGH) {
-    digitalWrite(gpio0_pin, HIGH);
-    sensorState = "Lights are on!!!!";
-    Serial.println("LED is on");
-    counter = 0;
-  }
-  else {
-      if (counter == setTime){
-      digitalWrite(gpio0_pin, LOW);
-      sensorState = "Lights are off!!!!";
-      Serial.println("LED is off");
-      Serial.println(changes);
-    }
-    else{
-      counter++;
-      Serial.println(counter);
-      if(counter == setTime){
-        stateChanges++;
-        changes =(String(stateChanges, DEC));
-      }
-      }
-    }
-delay(500);
-
-server.handleClient();
-  
-}

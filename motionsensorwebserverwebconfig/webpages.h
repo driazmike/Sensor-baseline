@@ -36,4 +36,13 @@ String file4=
 "<h1>Success: Saved new timeout. Return to status to check lights"
 "<p>Go to the <a href=\"lightstatus\" target=\"_self\">Light Status Page</a></p>\r\n";
 
+String file5a=
+"<h1>Read the test file from sd card."
+"<p>"
+"<p>";
+String file5b=
+"<p>Go to the <a href=\"lightstatus\" target=\"_self\">Light Status Page</a></p>\r\n";
+String file5c=
+"<p>The timeout value from sd card text file is: <p>";
+
 #endif
