@@ -53,7 +53,7 @@ void createWebServer(int webtype)
       server.send(200, "text/html", file1);
     });
     server.on("/lightstatus", [](){
-      String file2 = file2a + sensorState + file2b + changes + file2c + setTime;
+      String file2 = file2a + sensorState + file2b + changes + file2c + setTimer;
       server.send(200, "text/html", file2);
       });
     server.on("/timeoutsetting", [](){
@@ -61,12 +61,12 @@ void createWebServer(int webtype)
     });
     server.on("/setting", [](){
       String settTime = server.arg("Time");
-      setTime = settTime.toInt();
+      setTimer = settTime.toInt();
       SD.remove("Timeout.txt");
       myFile = SD.open("Timeout.txt", FILE_WRITE);
       if (myFile) {
         Serial.print("Writing to Timeout.txt...");
-        myFile.println(setTime);
+        myFile.println(setTimer);
         // close the file:
         myFile.close();
         Serial.println("done.");
@@ -111,5 +111,23 @@ void createWebServer(int webtype)
       String file5 = file5a + tested + file5b + file5c + Timeout;
       server.send(200, "text/html", file5);
       });
+      server.on("/day", [](){
+      String dayfile;
+      myFile = SD.open("0.txt");
+      if (myFile) {
+      Serial.println("0.txt:");
+      // read from the file until there's nothing else in it:
+      while (myFile.available()) {
+      char ltr = myFile.read();
+      dayfile = dayfile + ltr;
+      }
+      myFile.close();
+      Serial.println("file closed.");
+      } else {
+      // if the file didn't open, print an error:
+      Serial.println("error opening Timeout.txt");
+      }
+      server.send(200, "text/plain", dayfile);
+    });
     }
   }

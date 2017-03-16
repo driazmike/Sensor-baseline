@@ -3,8 +3,12 @@
 #include <EEPROM.h>
 #include <SD.h>
 #include <SPI.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+#include <TimeLib.h>
 #include "webpages.h"
 #include "webserver.h"
+
 
 ESP8266WebServer server(80);
 
@@ -22,11 +26,17 @@ int gpio4_pin = 4;
 int counter=0;
 int stateChanges=0;
 int irState;
-int setTime=10;
+int setTimer=10;
 Sd2Card card;
 SdVolume volume;
 SdFile root;
 File myFile;
+WiFiUDP ntpUDP;
+int16_t utc = 7; //UTC 7:00 Brazil
+uint32_t currentMillis = 0;
+uint32_t previousMillis = 0;
+ 
+NTPClient timeClient(ntpUDP, "a.st1.ntp.br", utc*3600, 60000);
 
 void setup() {
   // preparing GPIOs
@@ -89,7 +99,7 @@ void setup() {
 bool testWifi(void) {
   int c = 0;
   Serial.println("Waiting for Wifi to connect");  
-  while ( c < 20 ) {
+  while ( c < 40 ) {
     if (WiFi.status() == WL_CONNECTED) { return true; } 
     delay(500);
     Serial.print(WiFi.status());    
@@ -158,6 +168,9 @@ void setupAP(void) {
   Serial.println("softap");
   launchWeb(1);
   Serial.println("over");
+  // initialize time
+  timeClient.begin();
+  timeClient.update();
 }
 
 
