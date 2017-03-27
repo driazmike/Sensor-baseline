@@ -22,9 +22,9 @@ String sensorState;
 int gpio0_pin = 0;
 int gpio2_pin = 2;
 int gpio4_pin = 4;
-int counter=0;
+
 int stateChanges=0;
-int irState;
+
 int setTimer=10;
 Sd2Card card;
 SdVolume volume;
@@ -93,83 +93,6 @@ void setup() {
   }
 
   setupAP();
-}
-
-bool testWifi(void) {
-  int c = 0;
-  Serial.println("Waiting for Wifi to connect");  
-  while ( c < 40 ) {
-    if (WiFi.status() == WL_CONNECTED) { return true; } 
-    delay(500);
-    Serial.print(WiFi.status());    
-    c++;
-  }
-  Serial.println("");
-  Serial.println("Connect timed out, opening AP");
-  return false;
-} 
-
-void launchWeb(int webtype) {
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.print("Local IP: ");
-  Serial.println(WiFi.localIP());
-  Serial.print("SoftAP IP: ");
-  Serial.println(WiFi.softAPIP());
-  createWebServer(webtype);
-  // Start the server
-  server.begin();
-  Serial.println("Server started"); 
-}
-
-//AP server if not wifi configured
-void setupAP(void) {
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
-  delay(100);
-  int n = WiFi.scanNetworks();
-  Serial.println("scan done");
-  if (n == 0)
-    Serial.println("no networks found");
-  else
-  {
-    Serial.print(n);
-    Serial.println(" networks found");
-    for (int i = 0; i < n; ++i)
-     {
-      // Print SSID and RSSI for each network found
-      Serial.print(i + 1);
-      Serial.print(": ");
-      Serial.print(WiFi.SSID(i));
-      Serial.print(" (");
-      Serial.print(WiFi.RSSI(i));
-      Serial.print(")");
-      Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE)?" ":"*");
-      delay(10);
-     }
-  }
-  Serial.println(""); 
-  st = "<ol>";
-  for (int i = 0; i < n; ++i)
-    {
-      // Print SSID and RSSI for each network found
-      st += "<li>";
-      st += WiFi.SSID(i);
-      st += " (";
-      st += WiFi.RSSI(i);
-      st += ")";
-      st += (WiFi.encryptionType(i) == ENC_TYPE_NONE)?" ":"*";
-      st += "</li>";
-    }
-  st += "</ol>";
-  delay(200);
-  WiFi.softAP(ssid, passphrase, 6);
-  Serial.println("softap");
-  launchWeb(1);
-  Serial.println("over");
-  // initialize time
-  timeClient.begin();
-  timeClient.update();
 }
 
 
