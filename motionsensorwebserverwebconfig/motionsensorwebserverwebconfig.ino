@@ -70,7 +70,13 @@ void setup() {
   delay(10);
   Serial.println();
   Serial.println();
-
+ 
+ // initialize SD card
+        Serial.println("Initializing SD card...");
+        if (!SD.begin(15)) {
+            Serial.println("ERROR - SD card initialization failed!");}
+        Serial.println("SUCCESS - SD card initialized.");
+        
   Serial.println("Startup");
   // read eeprom for ssid and pass
   Serial.println("Reading EEPROM ssid");
@@ -98,21 +104,6 @@ void setup() {
   }
 
   setupAP();
-
-  // initialize SD card
-        Serial.println("Initializing SD card...");
-        if (!SD.begin(15)) {
-            Serial.println("ERROR - SD card initialization failed!");
-            return;    // init failed                                   *** What are these returns for?
-        }
-        Serial.println("SUCCESS - SD card initialized.");
-        // check for test.txt file
-        if (!SD.exists("test.txt")) {
-            Serial.println("ERROR - Can't find test.txt file!");
-            return;  // can't find index file
-        }
-        Serial.println("SUCCESS - Found test.txt file."); 
-  
 }
 
 
