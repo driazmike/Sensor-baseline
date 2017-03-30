@@ -10,6 +10,7 @@
 
 #include <WiFiClient.h>
 #include <ESP8266HTTPClient.h>
+#include <ESP8266mDNS.h>
 
 
 ESP8266WebServer server(80);
@@ -56,6 +57,8 @@ uint32_t previousMillis = 0;
  
 NTPClient timeClient(ntpUDP, "a.st1.ntp.br", utc*3600, 60000);
 
+char hostString[16] = {0};
+
 void setup() {
   // preparing GPIOs
   pinMode(gpio0_pin, OUTPUT);
@@ -98,12 +101,15 @@ void setup() {
   if ( esid.length() > 1 ) {
       WiFi.begin(esid.c_str(), epass.c_str());
       if (testWifi()) {
+        startDNS();
         launchWeb(0);
         return;
       } 
   }
 
   setupAP();
+
+
 }
 
 
