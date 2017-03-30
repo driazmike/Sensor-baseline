@@ -52,6 +52,7 @@ void createWebServer(int webtype)
     server.on("/", []() {
       server.send(200, "text/html", file1);
     });
+    
     server.on("/lightstatus", [](){
       String file2 = file2a + sensorState + file2b + changes + file2c + setTimer;
       server.send(200, "text/html", file2);
@@ -59,6 +60,7 @@ void createWebServer(int webtype)
     server.on("/timeoutsetting", [](){
       server.send(200, "text/html", file3);
     });
+    
     server.on("/setting", [](){
       String settTime = server.arg("Time");
       setTimer = settTime.toInt();
@@ -77,6 +79,7 @@ void createWebServer(int webtype)
       statusCode = 200;
       server.send(statusCode, "text/html", file4);
     });
+    
     server.on("/readme", [](){
       String tested;
       myFile = SD.open("tested.txt");
@@ -111,6 +114,7 @@ void createWebServer(int webtype)
       String file5 = file5a + tested + file5b + file5c + Timeout;
       server.send(200, "text/html", file5);
       });
+     
       server.on("/day", [](){
       String dayfile;
       myFile = SD.open("0.txt");
@@ -128,6 +132,41 @@ void createWebServer(int webtype)
       Serial.println("error opening Timeout.txt");
       }
       server.send(200, "text/plain", dayfile);
+    });
+
+    server.on("/motionDetected", [](){
+      String mdIP = server.arg("IP");   //Motion Detected IP address
+      Serial.println(mdIP);
+      Serial.println("in motionDetected function");
+      String reply = "";
+      if (true) {                        //check rules table goes here
+        reply += "activate\r\n";           //tell remote sensor switch to turn on light
+        enable_commandLastIPoff = true;    //set toggle to allow wi-fi module to initiate new communication once this session closes
+        if (lightOn)
+        {
+          motion_detectedDelay = true;  //used to toggle on a delay in main loop to allow PIR timer to finish
+          motionEnable = false;     //prevent light from immediately turning back on in main loop
+          counter = setTimer;          //Will cause light to turn off in main loop          
+        }
+      }
+      else
+        reply += "ignore\r\n";     // tell remote sensor to ignore motion detected
+      statusCode = 200;
+      server.send(statusCode, "text/html", reply);
+      nextActiveIP = mdIP;
+      delay(10);
+      // lastIP = mdIP;
+    });
+
+    server.on("/commandOff", [](){
+      if (lightOn)
+        {
+          Serial.println("in /command off handler");
+          motion_detectedDelay = true;  //used to toggle on a delay in main loop to allow PIR timer to finish
+          motionEnable = false;     //prevent light from immediately turning back on in main loop
+          counter = setTimer;        //Will cause light to turn off in main loop  
+        }   
+      server.send(200, "text/html", "");           
     });
     }
   }

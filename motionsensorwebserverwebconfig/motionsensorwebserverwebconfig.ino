@@ -8,24 +8,43 @@
 #include <TimeLib.h>
 #include "webpages.h"
 
+#include <WiFiClient.h>
+#include <ESP8266HTTPClient.h>
+
 
 ESP8266WebServer server(80);
 
 //init vars
 const char* ssid = "test";
 const char* passphrase = "test";
+
 String st;
 String content;
 int statusCode;
 String changes;
 String sensorState;
+
+String lastIP = "";                            //IP of the current active swtich
+String nextActiveIP = "base";
+
+bool motion_detectedDelay = false;
+bool motionEnable = true;
+bool lightOn = false;
+bool initial_motion_detected = true;  //when true, enables process motion detected data
+bool initial_light_off = false;
+bool enable_commandLastIPoff = false;  // Used to enable communication to last sensor upon completion of hosting communication from new sensor
+
 int gpio0_pin = 0;
 int gpio2_pin = 2;
-int gpio4_pin = 4;
+int PIR_INPUT = 4;
 
+int counter=0;
 int stateChanges=0;
-
+int irState;
 int setTimer=10;
+int incTimerDelay = 10;
+int off_counter = incTimerDelay;    //initialy off_counter cannot be lower than incTimerDelay
+
 Sd2Card card;
 SdVolume volume;
 SdFile root;
@@ -41,30 +60,16 @@ void setup() {
   // preparing GPIOs
   pinMode(gpio0_pin, OUTPUT);
   digitalWrite(gpio0_pin, LOW);
-  pinMode(gpio2_pin, INPUT);
+  pinMode(gpio2_pin, INPUT);                                 /// *** Why is this INPUT, my code has this as output? What is it for? Is this supposed to be a swtich input?
   digitalWrite(gpio2_pin, LOW);
   //attachInterrupt(0, manualinterrupt, CHANGE);
-  pinMode(gpio4_pin, INPUT);
+  pinMode(PIR_INPUT, INPUT);
   
   Serial.begin(115200);
   EEPROM.begin(512);
   delay(10);
   Serial.println();
   Serial.println();
-
-// initialize SD card
-        Serial.println("Initializing SD card...");
-        if (!SD.begin(15)) {
-            Serial.println("ERROR - SD card initialization failed!");
-            return;    // init failed
-        }
-        Serial.println("SUCCESS - SD card initialized.");
-        // check for test.txt file
-        if (!SD.exists("test.txt")) {
-            Serial.println("ERROR - Can't find test.txt file!");
-            return;  // can't find index file
-        }
-        Serial.println("SUCCESS - Found test.txt file."); 
 
   Serial.println("Startup");
   // read eeprom for ssid and pass
@@ -93,6 +98,21 @@ void setup() {
   }
 
   setupAP();
+
+  // initialize SD card
+        Serial.println("Initializing SD card...");
+        if (!SD.begin(15)) {
+            Serial.println("ERROR - SD card initialization failed!");
+            return;    // init failed                                   *** What are these returns for?
+        }
+        Serial.println("SUCCESS - SD card initialized.");
+        // check for test.txt file
+        if (!SD.exists("test.txt")) {
+            Serial.println("ERROR - Can't find test.txt file!");
+            return;  // can't find index file
+        }
+        Serial.println("SUCCESS - Found test.txt file."); 
+  
 }
 
 
